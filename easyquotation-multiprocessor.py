@@ -29,7 +29,7 @@ def chunks(l, n):
 
 # pprint.pprint(len(list(chunks(stock_codes, 800))))
 
-stock_codes_collections = list(chunks(stock_codes, 400))
+stock_codes_collections = list(chunks(stock_codes, 1000))
 
 def processor(name, codes) :
     while True:
@@ -40,6 +40,7 @@ def processor(name, codes) :
                 k_dict = {'stockcode': k}
                 v = {**k_dict, **v}
                 v = str(v)
+                v = v.replace('\'', '\"')
                 print('进程%s：%s' % (name,v))
                 channel.basic_publish(exchange='', routing_key='cc', body=v)
         except:
