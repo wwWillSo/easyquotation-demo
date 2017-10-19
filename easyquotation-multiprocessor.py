@@ -18,7 +18,6 @@ quotation = easyquotation.use("sina")
 
 #获得rabbitMQ连接
 connection=pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1'))
-channel=connection.channel()
 
 #将原列表按跨度分割成多个新列表
 def chunks(l, n):
@@ -27,6 +26,8 @@ def chunks(l, n):
         yield l[i:i+n]
 
 def processor(name, codes) :
+    channel = connection.channel()
+    channel.exchange_declare(exchange='Clogs-'+name, exchange_type='fanout')
     channel.queue_declare(name)  # 如果有cc的队列,略过;如果没有,创建cc的队列
     while True:
         try:
@@ -39,9 +40,9 @@ def processor(name, codes) :
                 v = {**k_dict, **v}
                 v = str(v)
                 v = v.replace('\'', '\"')
-                # if name == 'mq-11':
-                print('进程%s：%s' % (name,v))
-                channel.basic_publish(exchange='', routing_key=name, body=v)
+                if k == '000001':
+                    print('进程%s：%s' % (name,v))
+                channel.basic_publish(exchange='Clogs-'+name, routing_key=name, body=v)
         except:
             traceback.print_exc()
         #单从展示来看理论上不需要查询得这么频繁
