@@ -12,8 +12,10 @@
 from multiprocessing import Pool, Process
 import os, time, random, easyquotation, pika, sys, traceback
 import pprint
+import redis
 
 #定义新浪数据源
+
 quotation = easyquotation.use("sina")
 
 #获得rabbitMQ连接
@@ -41,7 +43,8 @@ def processor(name, codes) :
                 v = {**k_dict, **v}
                 v = str(v)
                 v = v.replace('\'', '\"')
-                if name == 'mq-all':
+                # if name == 'mq-all':
+                if (name == 'mq-all' and k == '000001'):
                     print('进程%s：%s' % (name,v))
                 channel.basic_publish(exchange='Clogs-'+name, routing_key='', body=v)
         except:
@@ -73,5 +76,19 @@ def startPool() :
     if result.successful():
         print('successful')
 
+def syncToRedis():
+    redis_client = redis.Redis(host='localhost', port=6379, db=1)
+    stock_codes = list(quotation.load_stock_codes())
+    #删除旧缓存
+    redis_client.delete('stockCodes')
+
+    data = quotation.stocks(stock_codes)
+    # redis_client.set('stockCodes', list(data))
+    str = ''
+    for code in list(data):
+        str = str + code + ','
+    redis_client.set('stockCodes', "\"" + str + "\"")
+
 if __name__ == '__main__':
+    syncToRedis()
     startPool()
