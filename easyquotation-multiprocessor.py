@@ -9,7 +9,7 @@
 @time: 2017\10\17 0017 13:52
 """
 
-from multiprocessing import Pool
+from multiprocessing import Pool, Process
 import os, time, random, easyquotation, pika, sys, traceback
 import pprint
 
@@ -29,6 +29,7 @@ def processor(name, codes) :
     channel = connection.channel()
     channel.exchange_declare(exchange='Clogs-'+name, exchange_type='fanout')
     channel.queue_declare(name)  # 如果有cc的队列,略过;如果没有,创建cc的队列
+
     while True:
         try:
             data = quotation.stocks(codes)
@@ -40,13 +41,13 @@ def processor(name, codes) :
                 v = {**k_dict, **v}
                 v = str(v)
                 v = v.replace('\'', '\"')
-                if k == '000001':
+                if name == 'mq-all':
                     print('进程%s：%s' % (name,v))
-                channel.basic_publish(exchange='Clogs-'+name, routing_key=name, body=v)
+                channel.basic_publish(exchange='Clogs-'+name, routing_key='', body=v)
         except:
             traceback.print_exc()
         #单从展示来看理论上不需要查询得这么频繁
-        time.sleep(2)
+        time.sleep(1.3)
 
 #创建进程池
 def startPool() :
@@ -59,6 +60,10 @@ def startPool() :
 
     for i in range(0, len(stock_codes_collections)):
         result = pool.apply_async(processor, ('mq-'+str(i+1), stock_codes_collections[i]))
+
+    # 多启动一个进程，发布全部代码行情
+    p = Process(target=processor, args=('mq-all', stock_codes))
+    p.start()
 
     pool.close()
     pool.join()
