@@ -13,9 +13,10 @@ from multiprocessing import Pool, Process
 import os, time, random, easyquotation, pika, sys, traceback
 import pprint
 import redis
+from flask import Flask, request, session, g, redirect, url_for, abort, \
+     render_template, flash, jsonify
 
 #定义新浪数据源
-
 quotation = easyquotation.use("sina")
 
 #获得rabbitMQ连接
