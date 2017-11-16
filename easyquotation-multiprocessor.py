@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python3
 # encoding: utf-8
 
 """
@@ -78,7 +78,7 @@ def startPool() :
         print('successful')
 
 def syncToRedis():
-    redis_client = redis.Redis(host='localhost', port=6379, db=1)
+    redis_client = redis.Redis(host='39.108.179.2', port=6379, db=1, password='easyquotation')
     stock_codes = list(quotation.load_stock_codes())
     #删除旧缓存
     redis_client.delete('stockCodes')

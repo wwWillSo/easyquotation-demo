@@ -58,4 +58,4 @@ def retrieve_all_marketdata():
     return return_str
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8081)
+    app.run(debug=True, port=8090)
