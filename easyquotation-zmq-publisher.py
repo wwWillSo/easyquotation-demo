@@ -22,6 +22,7 @@ socket = context.socket(zmq.PUB)
 socket.bind("tcp://127.0.0.1:5561")
 
 def processor(name, codes) :
+    print('zmq-publisher开始运行...')
     while True:
         try:
             data = quotation.stocks(codes)
@@ -34,8 +35,8 @@ def processor(name, codes) :
                 v = str(v)
                 v = v.replace('\'', '\"')
                 # if name == 'mq-all':
-                if (name == 'mq-all' and k == '000001'):
-                    print('进程%s：%s' % (name,v))
+                # if (name == 'mq-all' and k == '000001'):
+                #     print('进程%s：%s' % (name,v))
                 socket.send_string('marketdata:' + k + '\r\n' + v)
                 # socket.send_string(v)
         except:
@@ -44,7 +45,7 @@ def processor(name, codes) :
         time.sleep(1.3)
 
 def syncToRedis():
-    redis_client = redis.Redis(host='127.0.0.1', port=6379, db=1)
+    redis_client = redis.Redis(host='127.0.0.1', port=6379, db=1, password='easyquotation')
     stock_codes = list(quotation.load_stock_codes())
     #删除旧缓存
     redis_client.delete('stockCodes')
