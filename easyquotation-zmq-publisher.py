@@ -45,7 +45,7 @@ def processor(name, codes) :
         time.sleep(1.3)
 
 def syncToRedis():
-    redis_client = redis.Redis(host='127.0.0.1', port=6379, db=1, password='easyquotation')
+    redis_client = redis.Redis(host='127.0.0.1', port=6379, db=1)
     stock_codes = list(quotation.load_stock_codes())
     #删除旧缓存
     redis_client.delete('stockCodes')
