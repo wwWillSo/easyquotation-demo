@@ -10,8 +10,11 @@
 """
 
 import easyquotation
-from flask import Flask, request, session, g, redirect, url_for, abort, \
+from flask import Flask, request as flaskReq, session, g, redirect, url_for, abort, \
      render_template, flash, jsonify
+from urllib import request,parse
+import re, os, traceback, time
+import json
 
 quotation = easyquotation.use("sina")
 
@@ -26,7 +29,7 @@ def chunks(l, n):
 
 @app.route('/getMarketData')
 def retrieve_marketdata():
-    code = request.args.get('code')
+    code = flaskReq.args.get('code')
     data = quotation.stocks(code)
     v = data.get(code)
     k_dict = {'stockcode': code}
@@ -57,5 +60,118 @@ def retrieve_all_marketdata():
     print(return_str)
     return return_str
 
+@app.route('/getAllDailyKLine')
+def getAllDailyKLine() :
+    stock_codes = quotation.load_stock_codes()
+
+    all_k_line = {}
+
+    all_k_line_arr = []
+
+    i = 0
+    for code in stock_codes :
+        if i > 10 :
+            break
+        all_k_line_arr.append(getDailyKLineMethod(code))
+        i = i + 1
+
+    all_k_line['record'] = all_k_line_arr
+
+    return jsonify(all_k_line)
+
+
+def getDailyKLineMethod(stockcode):
+    try:
+        code = stockcode
+
+        if int(code[0]) >= 6:
+            code = 'sh' + code
+        else:
+            code = 'sz' + code
+
+        url = 'http://api.finance.ifeng.com/akdaily/?code=' + code + '&type=last'
+        req = request.Request(url)
+        resp = request.urlopen(req)
+        str = bytes.decode(resp.read(), encoding='utf-8')
+        dict = json.loads(str)
+
+        data_list = dict.get('record')
+
+        cols_arr = ['date', 'open', 'high', 'close', 'low', 'volume', 'chg', '%chg', 'ma5', 'ma10', 'ma20',
+                    'vma5', 'vma10', 'vma20', 'turnover']
+
+        data_arr = []
+
+        for data in data_list:
+            i = 0
+            # print(data)
+            data_dict = {}
+            for col in data:
+                if cols_arr[i] == 'date' or cols_arr[i] == 'open' or cols_arr[i] == 'close' or cols_arr[
+                    i] == 'high' or cols_arr[i] == 'low' or cols_arr[i] == 'volume' or cols_arr[
+                    i] == 'turnover':
+                    data_dict[cols_arr[i]] = col
+                i = i + 1
+                # print(data_dict)
+            data_arr.append(data_dict)
+
+        stock_dict = {}
+        stock_dict[stockcode] = data_arr
+
+        return stock_dict
+
+    except:
+        traceback.print_exc()
+
+
+# http://api.finance.ifeng.com/akdaily/?code=sh601989&type=last
+# ['date', 'open', 'high', 'close', 'low', 'volume','chg', '%chg', 'ma5', 'ma10', 'ma20','vma5', 'vma10', 'vma20', 'turnover']
+# ['2014-12-01', '6.300', '6.450', '6.280', '6.150', '3689169.25', '-0.040', '-0.63', '6.280', '6.280', '6.280', '3,689,169.25', '3,689,169.25', '3,689,169.25', '2.26']
+@app.route('/getDailyKLine')
+def getDailyKLine() :
+    try :
+        stockcode = flaskReq.args.get('stockcode')
+        code = stockcode
+
+        if int(code[0]) >= 6 :
+            code = 'sh' + code
+        else :
+            code = 'sz' + code
+
+        url = 'http://api.finance.ifeng.com/akdaily/?code='+code+'&type=last'
+        req = request.Request(url)
+        resp = request.urlopen(req)
+        str = bytes.decode(resp.read(), encoding='utf-8')
+        dict = json.loads(str)
+
+        print(dict)
+
+        data_list = dict.get('record')
+
+        cols_arr = ['date', 'open', 'high', 'close', 'low', 'volume','chg', '%chg', 'ma5', 'ma10', 'ma20','vma5', 'vma10', 'vma20', 'turnover']
+
+        data_arr = []
+
+        for data in data_list:
+            i = 0
+            # print(data)
+            data_dict = {}
+            for col in data :
+                if cols_arr[i] == 'date' or cols_arr[i] == 'open' or cols_arr[i] == 'close' or cols_arr[i] == 'high' or cols_arr[i] == 'low' or cols_arr[i] == 'volume' or cols_arr[i] == 'turnover':
+                    data_dict[cols_arr[i]] = col
+                i = i + 1
+            # print(data_dict)
+            data_arr.append(data_dict)
+
+        stock_dict = {}
+        stock_dict[stockcode] = data_arr
+
+        return jsonify(stock_dict)
+
+    except:
+        traceback.print_exc()
+
 if __name__ == '__main__':
+    # getDailyKLine()
+    # getAllDailyKLine()
     app.run(debug=True, port=8090)
