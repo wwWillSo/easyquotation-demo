@@ -15,6 +15,7 @@ from flask import Flask, request as flaskReq, session, g, redirect, url_for, abo
 from urllib import request,parse
 import re, os, traceback, time
 import json
+import redis
 
 quotation = easyquotation.use("sina")
 
@@ -144,8 +145,6 @@ def getDailyKLine() :
         str = bytes.decode(resp.read(), encoding='utf-8')
         dict = json.loads(str)
 
-        print(dict)
-
         data_list = dict.get('record')
 
         cols_arr = ['date', 'open', 'high', 'close', 'low', 'volume','chg', '%chg', 'ma5', 'ma10', 'ma20','vma5', 'vma10', 'vma20', 'turnover']
@@ -171,7 +170,22 @@ def getDailyKLine() :
     except:
         traceback.print_exc()
 
+@app.route('/syncToRedis')
+def syncToRedis():
+    redis_client = redis.Redis(host='127.0.0.1', port=6379, db=1, password='easyquotation')
+    stock_codes = list(quotation.load_stock_codes())
+    #删除旧缓存
+    redis_client.delete('stockCodes')
+
+    data = quotation.stocks(stock_codes)
+    # redis_client.set('stockCodes', list(data))
+    str = ''
+    for code in list(data):
+        str = str + code + ','
+    redis_client.set('stockCodes', "\"" + str + "\"")
+    return "TRUE"
+
 if __name__ == '__main__':
     # getDailyKLine()
     # getAllDailyKLine()
-    app.run(debug=True, port=8090)
+    app.run(debug=True, host='0.0.0.0', port=8090)
