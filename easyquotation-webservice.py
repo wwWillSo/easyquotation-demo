@@ -58,7 +58,7 @@ def retrieve_all_marketdata():
         v = v.replace('\'', '\"')
         return_str = return_str + v + ','
     return_str = return_str[:-1] + ']}'
-    print(return_str)
+    # print(return_str)
     return return_str
 
 @app.route('/getAllDailyKLine')
