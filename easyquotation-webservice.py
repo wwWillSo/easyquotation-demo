@@ -16,8 +16,13 @@ from urllib import request,parse
 import re, os, traceback, time
 import json
 import redis
+import configparser
 
-quotation = easyquotation.use("sina")
+# 读取配置
+config=configparser.ConfigParser()
+config.read('config.ini')
+
+quotation = easyquotation.use(config.get("easyquotation", 'source'))
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -170,9 +175,18 @@ def getDailyKLine() :
     except:
         traceback.print_exc()
 
+# 获取redis_client
+def getRedisClient() :
+    host = config.get("redis", 'ip')
+    port = config.get("redis", 'port')
+    password = config.get("redis", 'password')
+    db = config.get("redis", 'db')
+    redis_client = redis.Redis(host=host, port=port, password=password, db=db)
+    return redis_client
+
 @app.route('/syncToRedis')
 def syncToRedis():
-    redis_client = redis.Redis(host='127.0.0.1', port=6379, db=1, password='easyquotation')
+    redis_client = getRedisClient()
     stock_codes = list(quotation.load_stock_codes())
     #删除旧缓存
     redis_client.delete('stockCodes')
@@ -188,4 +202,4 @@ def syncToRedis():
 if __name__ == '__main__':
     # getDailyKLine()
     # getAllDailyKLine()
-    app.run(debug=True, host='0.0.0.0', port=8090)
+    app.run(debug=True, host=config.get("webservice", 'host'), port=int(config.get("webservice", 'port')))

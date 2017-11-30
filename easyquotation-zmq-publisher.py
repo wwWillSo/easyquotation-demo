@@ -13,13 +13,18 @@ import zmq
 import redis
 import os, time, random, easyquotation, pika, sys, traceback
 from multiprocessing import Pool, Process
+import configparser
+
+# 读取配置
+config=configparser.ConfigParser()
+config.read('config.ini')
 
 #定义新浪数据源
-quotation = easyquotation.use("sina")
+quotation = easyquotation.use(config.get("easyquotation", 'source'))
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
-socket.bind("tcp://127.0.0.1:5561")
+socket.bind(config.get("zmq", 'host'))
 
 def processor(name, codes) :
     print('zmq-publisher开始运行...')
@@ -38,18 +43,25 @@ def processor(name, codes) :
                 # if (name == 'mq-all' and k == '000001'):
                 #     print('进程%s：%s' % (name,v))
                 socket.send_string('marketdata:' + k + '\r\n' + v)
-                # socket.send_string(v)
         except:
             traceback.print_exc()
         #单从展示来看理论上不需要查询得这么频繁
         time.sleep(1.3)
 
+# 获取redis_client
+def getRedisClient() :
+    host = config.get("redis", 'ip')
+    port = config.get("redis", 'port')
+    password = config.get("redis", 'password')
+    db = config.get("redis", 'db')
+    redis_client = redis.Redis(host=host, port=port, password=password, db=db)
+    return redis_client
+
 def syncToRedis():
-    redis_client = redis.Redis(host='127.0.0.1', port=6379, db=1)
+    redis_client = getRedisClient()
     stock_codes = list(quotation.load_stock_codes())
     #删除旧缓存
     redis_client.delete('stockCodes')
-
     data = quotation.stocks(stock_codes)
     # redis_client.set('stockCodes', list(data))
     str = ''
