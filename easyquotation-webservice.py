@@ -156,18 +156,38 @@ def getDailyKLine() :
 
         data_arr = []
 
-        for data in data_list:
+        history_switch = config.get("dailyKLineHistory", 'switch')
+
+        stock_dict = {}
+
+        if len(data_list) == 0:
+            return jsonify(stock_dict)
+
+        # 开启历史k线推送时遍历全部
+        if history_switch == 'Y':
+            for data in data_list:
+                i = 0
+                # print(data)
+                data_dict = {}
+                for col in data :
+                    if cols_arr[i] == 'date' or cols_arr[i] == 'open' or cols_arr[i] == 'close' or cols_arr[i] == 'high' or cols_arr[i] == 'low' or cols_arr[i] == 'volume' or cols_arr[i] == 'turnover':
+                        data_dict[cols_arr[i]] = col
+                    i = i + 1
+                # print(data_dict)
+                data_arr.append(data_dict)
+        else :
+            data = data_list[len(data_list) - 1]
             i = 0
             # print(data)
             data_dict = {}
-            for col in data :
-                if cols_arr[i] == 'date' or cols_arr[i] == 'open' or cols_arr[i] == 'close' or cols_arr[i] == 'high' or cols_arr[i] == 'low' or cols_arr[i] == 'volume' or cols_arr[i] == 'turnover':
+            for col in data:
+                if cols_arr[i] == 'date' or cols_arr[i] == 'open' or cols_arr[i] == 'close' or cols_arr[i] == 'high' or \
+                                cols_arr[i] == 'low' or cols_arr[i] == 'volume' or cols_arr[i] == 'turnover':
                     data_dict[cols_arr[i]] = col
                 i = i + 1
             # print(data_dict)
             data_arr.append(data_dict)
 
-        stock_dict = {}
         stock_dict[stockcode] = data_arr
 
         return jsonify(stock_dict)
