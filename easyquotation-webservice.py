@@ -17,6 +17,8 @@ import re, os, traceback, time
 import json
 import redis
 import configparser
+import pymysql
+from datetime import  datetime, timedelta
 
 # 读取配置
 config=configparser.ConfigParser()
@@ -26,6 +28,12 @@ quotation = easyquotation.use(config.get("easyquotation", 'source'))
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
+
+#mysql配置
+db_host = config.get("mysql", "host")
+db_username = config.get("mysql", "username")
+db_password = config.get("mysql", "password")
+db_database = config.get("mysql", "database")
 
 #将原列表按跨度分割成多个新列表
 def chunks(l, n):
@@ -218,6 +226,45 @@ def syncToRedis():
         str = str + code + ','
     redis_client.set('stockCodes', "\"" + str + "\"")
     return "TRUE"
+
+@app.route('/createNewTableJob')
+def createNewTableJob():
+    interval = flaskReq.args.get('interval')
+    return createNewTable(int(interval))
+
+def getConnect():
+    db = pymysql.connect(db_host, db_username, db_password, db_database)
+    return db
+def createNewTable(interval) :
+    db = None
+    try :
+        #market_data_candle_chart_2017_12_08
+        day = get_someday(interval)
+        day = day.replace('-', '_')
+        print(day)
+        table_name = 'market_data_candle_chart_' + day
+        print('创建任务启动...')
+        sql = 'CREATE TABLE ' + table_name + ' like market_data_candle_chart;' \
+              + "insert into " + table_name\
+              + " (select * from market_data_candle_chart where DATE_SUB(CURDATE(),INTERVAL "+ str(interval) +" DAY) <= create_time and chart_type not in (1440) );" \
+                "delete from market_data_candle_chart where DATE_SUB(CURDATE(),INTERVAL "+ str(interval) +" DAY) <= create_time and chart_type not in (1440);"
+        print(sql)
+        db = getConnect()
+        cursor = db.cursor()
+        cursor.execute(sql)
+        return "SUCCESS"
+    except:
+        traceback.print_exc()
+        return "FAIL"
+    finally:
+        db.close()
+
+def get_date(days=0):
+    return datetime.now() - timedelta(days=days)
+
+def get_someday(interval):
+    day = datetime.strptime(str(get_date(interval)).split(' ')[0], '%Y-%m-%d')
+    return str(day).split(' ')[0]
 
 if __name__ == '__main__':
     # getDailyKLine()
