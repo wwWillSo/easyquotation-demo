@@ -230,7 +230,8 @@ def syncToRedis():
 @app.route('/createNewTableJob')
 def createNewTableJob():
     interval = flaskReq.args.get('interval')
-    return createNewTable(int(interval))
+    createNewTable(interval)
+    return "SUCCESS"
 
 def getConnect():
     db = pymysql.connect(db_host, db_username, db_password, db_database)
@@ -239,24 +240,69 @@ def createNewTable(interval) :
     db = None
     try :
         #market_data_candle_chart_2017_12_08
-        day = get_someday(interval)
+        print('创建表任务启动...')
+        day = get_someday(int(interval))
         day = day.replace('-', '_')
         print(day)
         table_name = 'market_data_candle_chart_' + day
-        print('创建任务启动...')
-        sql = 'CREATE TABLE ' + table_name + ' like market_data_candle_chart;' \
-              + "insert into " + table_name\
-              + " (select * from market_data_candle_chart where DATE_SUB(CURDATE(),INTERVAL "+ str(interval) +" DAY) <= create_time and chart_type not in (1440) );" \
-                "delete from market_data_candle_chart where DATE_SUB(CURDATE(),INTERVAL "+ str(interval) +" DAY) <= create_time and chart_type not in (1440);"
+        sql1 = 'CREATE TABLE ' + table_name + ' like market_data_candle_chart;'
+        sql2 = "insert into " + table_name \
+              + " (select * from market_data_candle_chart where DATE_SUB(CURDATE(),INTERVAL " + str(
+            interval) + " DAY) <= create_time and chart_type not in (1440) );"
+        sql3 = "delete from market_data_candle_chart where DATE_SUB(CURDATE(),INTERVAL " + str(
+            interval) + " DAY) <= create_time and chart_type not in (1440);"
+        print(sql1)
+        print(sql2)
+        print(sql3)
+        db = getConnect()
+        cursor = db.cursor()
+        cursor.execute(sql1)
+        cursor.execute(sql2)
+        cursor.execute(sql3)
+        print('创建表任务完成...')
+    except:
+        traceback.print_exc()
+        return "FALSE"
+    finally:
+        db.close()
+
+def copyData(interval) :
+    db = None
+    try:
+        print('复制数据任务启动...')
+        day = get_someday(interval)
+        day = day.replace('-','_')
+        print(day)
+        table_name = 'market_data_candle_chart_' + day
+        sql = "insert into " + table_name\
+              + " (select * from market_data_candle_chart where DATE_SUB(CURDATE(),INTERVAL "+ str(interval) +" DAY) <= create_time and chart_type not in (1440) );"
         print(sql)
         db = getConnect()
         cursor = db.cursor()
         cursor.execute(sql)
-        return "SUCCESS"
-    except:
+        print('复制数据任务完成...')
+    except :
         traceback.print_exc()
-        return "FAIL"
-    finally:
+    finally :
+        db.close()
+
+def deleteData(interval) :
+    db = None
+    try:
+        print('删除数据任务启动...')
+        day = get_someday(interval)
+        day = day.replace('-','_')
+        print(day)
+        table_name = 'market_data_candle_chart_' + day
+        sql = "delete from market_data_candle_chart where DATE_SUB(CURDATE(),INTERVAL " + str(interval) + " DAY) <= create_time and chart_type not in (1440);"
+        print(sql)
+        db = getConnect()
+        cursor = db.cursor()
+        cursor.execute(sql)
+        print('删除数据任务完成...')
+    except :
+        traceback.print_exc()
+    finally :
         db.close()
 
 def get_date(days=0):
