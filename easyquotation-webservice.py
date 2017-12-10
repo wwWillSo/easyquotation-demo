@@ -240,17 +240,16 @@ def createNewTable(interval) :
     db = None
     try :
         #market_data_candle_chart_2017_12_08
-        print('创建表任务启动...')
+        print('转移行情表任务启动...')
         day = get_someday(int(interval))
         day = day.replace('-', '_')
         print(day)
         table_name = 'market_data_candle_chart_' + day
         sql1 = 'CREATE TABLE ' + table_name + ' like market_data_candle_chart;'
-        sql2 = "insert into " + table_name \
-              + " (select * from market_data_candle_chart where DATE_SUB(CURDATE(),INTERVAL " + str(
-            interval) + " DAY) <= create_time and chart_type not in (1440) );"
-        sql3 = "delete from market_data_candle_chart where DATE_SUB(CURDATE(),INTERVAL " + str(
-            interval) + " DAY) <= create_time and chart_type not in (1440);"
+        sql2 = "insert into " + table_name + " (select * from market_data_candle_chart where create_time <= DATE_SUB(CURDATE(),INTERVAL " + str(
+            interval) + " DAY) and chart_type not in (1440));"
+        sql3 = "delete from market_data_candle_chart where create_time <= DATE_SUB(CURDATE(),INTERVAL " + str(
+            interval) + " DAY)  and chart_type not in (1440);"
         print(sql1)
         print(sql2)
         print(sql3)
@@ -259,7 +258,8 @@ def createNewTable(interval) :
         cursor.execute(sql1)
         cursor.execute(sql2)
         cursor.execute(sql3)
-        print('创建表任务完成...')
+        db.commit()
+        print('转移行情表任务完成...')
     except:
         traceback.print_exc()
         return "FALSE"
