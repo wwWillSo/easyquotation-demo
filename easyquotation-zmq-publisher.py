@@ -46,7 +46,7 @@ def processor(name, codes) :
         except:
             traceback.print_exc()
         #单从展示来看理论上不需要查询得这么频繁
-        time.sleep(1.3)
+        # time.sleep(1.3)
 
 # 获取redis_client
 def getRedisClient() :
