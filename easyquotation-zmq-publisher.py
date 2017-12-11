@@ -40,13 +40,13 @@ def processor(name, codes) :
                 v = str(v)
                 v = v.replace('\'', '\"')
                 # if name == 'mq-all':
-                # if (name == 'mq-all' and k == '000001'):
+                # if (name == 'mq-all' and k == '000002'):
                 #     print('进程%s：%s' % (name,v))
                 socket.send_string('marketdata:' + k + '\r\n' + v)
         except:
             traceback.print_exc()
         #单从展示来看理论上不需要查询得这么频繁
-        # time.sleep(1.3)
+        time.sleep(1)
 
 # 获取redis_client
 def getRedisClient() :
