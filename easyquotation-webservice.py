@@ -139,7 +139,7 @@ def getDailyKLineMethod(stockcode):
 
 
 # http://api.finance.ifeng.com/akdaily/?code=sh601989&type=last
-# ['date', 'open', 'high', 'close', 'low', 'volume','chg', '%chg', 'ma5', 'ma10', 'ma20','vma5', 'vma10', 'vma20', 'turnover']
+# ['date', 'open', 'high', 'close', 'low', 'volume','chg', '%chg', 'ma5', 'ma10', 'ma20','vma5', 'vma10', 'vma20', 'change']
 # ['2014-12-01', '6.300', '6.450', '6.280', '6.150', '3689169.25', '-0.040', '-0.63', '6.280', '6.280', '6.280', '3,689,169.25', '3,689,169.25', '3,689,169.25', '2.26']
 @app.route('/getDailyKLine')
 def getDailyKLine() :
@@ -160,7 +160,7 @@ def getDailyKLine() :
 
         data_list = dict.get('record')
 
-        cols_arr = ['date', 'open', 'high', 'close', 'low', 'volume','chg', '%chg', 'ma5', 'ma10', 'ma20','vma5', 'vma10', 'vma20', 'turnover']
+        cols_arr = ['date', 'open', 'high', 'close', 'low', 'volume','chg', '%chg', 'ma5', 'ma10', 'ma20','vma5', 'vma10', 'vma20', 'change']
 
         data_arr = []
 
@@ -178,7 +178,7 @@ def getDailyKLine() :
                 # print(data)
                 data_dict = {}
                 for col in data :
-                    if cols_arr[i] == 'date' or cols_arr[i] == 'open' or cols_arr[i] == 'close' or cols_arr[i] == 'high' or cols_arr[i] == 'low' or cols_arr[i] == 'volume' or cols_arr[i] == 'turnover':
+                    if cols_arr[i] == 'date' or cols_arr[i] == 'open' or cols_arr[i] == 'close' or cols_arr[i] == 'high' or cols_arr[i] == 'low' or cols_arr[i] == 'volume':
                         data_dict[cols_arr[i]] = col
                     i = i + 1
                 # print(data_dict)
@@ -190,7 +190,7 @@ def getDailyKLine() :
             data_dict = {}
             for col in data:
                 if cols_arr[i] == 'date' or cols_arr[i] == 'open' or cols_arr[i] == 'close' or cols_arr[i] == 'high' or \
-                                cols_arr[i] == 'low' or cols_arr[i] == 'volume' or cols_arr[i] == 'turnover':
+                                cols_arr[i] == 'low' or cols_arr[i] == 'volume':
                     data_dict[cols_arr[i]] = col
                 i = i + 1
             # print(data_dict)
